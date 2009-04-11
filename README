@@ -1,0 +1,7 @@
+Requires:
+  ruby (any 1.8 should do but I've only tested on 1.8.7)
+  rubygems
+    twitter-0.6.0
+  libnotify-bin
+
+Still needs to be packaged and distributed and blogged about.

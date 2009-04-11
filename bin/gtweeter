@@ -1,0 +1,55 @@
+#! /usr/bin/env ruby
+
+require 'rubygems'
+require 'twitter'
+require 'yaml'
+
+begin
+  configuration = YAML.parse(File.read(ENV['HOME'] + '/.gtweeter'))
+rescue Errno::ENOENT
+  puts "Couldn't load configuration file. Is there a `#{ENV['HOME']}/.gtweeter` file?"
+  exit 1
+end
+
+USERNAME = configuration['username']
+PASSWORD = configuration['password']
+
+class GTweeter
+  def initialize(username, password)
+    @username = username
+    @password = password
+  end
+
+  def connect
+    @twitter = Twitter::Base.new(Twitter::HTTPAuth.new(@username, @password))
+  end
+
+  def last_update_id
+    @last_update_id ||= begin
+      last_update = @twitter.friends_timeline(:count => 1)[0]
+      last_update && last_update.id
+    end
+  end
+
+  def last_update_id=(id)
+    @last_update_id = id
+  end
+
+  def updates(&block)
+    new_updates = @twitter.friends_timeline(:since_id => last_update_id)
+    new_updates.each { |update| yield update; self.last_update_id = update.id }
+  end
+end
+
+timeline = GTweeter.new(USERNAME, PASSWORD)
+timeline.connect
+
+loop do
+  begin
+  timeline.updates do |update|
+    %x[notify-send "#{update.user.name} (#{update.user.screen_name})" "#{update.text}"]
+  end
+  rescue
+  end
+  sleep 60
+end
