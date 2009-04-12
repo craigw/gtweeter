@@ -5,7 +5,7 @@ require 'twitter'
 require 'yaml'
 
 begin
-  configuration = YAML.parse(File.read(ENV['HOME'] + '/.gtweeter'))
+  configuration = YAML.parse(File.read(ENV['HOME'] + '/.gtweeter')).transform
 rescue Errno::ENOENT
   puts "Couldn't load configuration file. Is there a `#{ENV['HOME']}/.gtweeter` file?"
   exit 1
@@ -21,23 +21,30 @@ class GTweeter
   end
 
   def connect
+    puts "Connecting as #{@username}" if $DEBUG
     @twitter = Twitter::Base.new(Twitter::HTTPAuth.new(@username, @password))
   end
 
   def last_update_id
     @last_update_id ||= begin
       last_update = @twitter.friends_timeline(:count => 1)[0]
-      last_update && last_update.id
+      if last_update
+        puts "Most recent update found: #{last_update.id}" if $DEBUG
+        last_update.id
+      end
     end
   end
 
   def last_update_id=(id)
+    puts "Most recent update set to #{id}" if $DEBUG
     @last_update_id = id
   end
 
   def updates(&block)
     new_updates = @twitter.friends_timeline(:since_id => last_update_id)
+    puts "Processing #{new_updates.size} updates..." if $DEBUG
     new_updates.each { |update| yield update; self.last_update_id = update.id }
+    puts "Done processing most recent updates" if $DEBUG
   end
 end
 
@@ -45,11 +52,19 @@ timeline = GTweeter.new(USERNAME, PASSWORD)
 timeline.connect
 
 loop do
+  puts "Preparing to process updates" if $DEBUG
   begin
   timeline.updates do |update|
     %x[notify-send "#{update.user.name} (#{update.user.screen_name})" "#{update.text}"]
   end
-  rescue
+  rescue => e
+    if $DEBUG
+      puts "Error: #{e.message}"
+      e.backtrace.each do |line|
+        puts "  #{line}"
+      end
+    end
   end
+  puts "Sleeping so we don't hammer Twitter with requests" if $DEBUG
   sleep 60
 end
