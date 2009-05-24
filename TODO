@@ -1,0 +1,5 @@
+* @recent_ids should really be part of the GTweeter class.
+* It'd be nice to have a persons avatar show in the gnome-notify notification.
+* Can gnome-notify be made to open the individual status page when clicked?
+  * Or better: persons timeline when name clicked, status when text clicked, URL when URL clicked.
+* Umm... tests...
