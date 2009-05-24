@@ -3,3 +3,4 @@
 * Can gnome-notify be made to open the individual status page when clicked?
   * Or better: persons timeline when name clicked, status when text clicked, URL when URL clicked.
 * Umm... tests...
+* Package this so it's an easy install: `apt-get install gnome-notify-tweets` would be awesome.
