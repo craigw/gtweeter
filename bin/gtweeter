@@ -27,7 +27,7 @@ class GTweeter
 
   def last_update_id
     @last_update_id ||= begin
-      last_update = @twitter.friends_timeline(:count => 1)[0]
+      last_update = @twitter.friends_timeline(:count => 10)[-1]
       if last_update
         puts "Most recent update found: #{last_update.id}" if $DEBUG
         last_update.id
