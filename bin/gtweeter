@@ -51,12 +51,35 @@ end
 timeline = GTweeter.new(USERNAME, PASSWORD)
 timeline.connect
 
+mutex = Mutex.new
+
+@recent_ids = {}
+
+Thread.new do
+  loop do
+    @recent_ids.keys.each do |timestamp|
+      if timestamp + 120 < Time.now.to_f
+        puts "Expiring update #{@recent_ids[timestamp]} from #{Time.at(timestamp)}" if $DEBUG
+        mutex.synchronize {
+          @recent_ids.delete(timestamp)
+        }
+      end
+    end
+    sleep 1
+  end
+end
+
 loop do
   puts "Preparing to process updates" if $DEBUG
   begin
   timeline.updates do |update|
-    puts "[#{update.id}] #{update.user.screen_name}: #{update.text}" if $DEBUG
-    %x[notify-send "#{update.user.name} (#{update.user.screen_name})" "#{update.text}"]
+    if !@recent_ids.values.include? update.id
+      %x[notify-send "#{update.user.name} (#{update.user.screen_name})" "#{update.text}"]
+      mutex.synchronize {
+        @recent_ids[Time.now.to_f] = update.id
+      }
+      puts "[#{update.id}] #{update.user.screen_name}: #{update.text}" if $DEBUG
+    end
   end
   rescue Timeout::Error, RuntimeError => e
     if $DEBUG
