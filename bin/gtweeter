@@ -57,13 +57,11 @@ mutex = Mutex.new
 
 Thread.new do
   loop do
-    @recent_ids.keys.each do |timestamp|
-      if timestamp + 120 < Time.now.to_f
-        puts "Expiring update #{@recent_ids[timestamp]} from #{Time.at(timestamp)}" if $DEBUG
-        mutex.synchronize {
-          @recent_ids.delete(timestamp)
-        }
-      end
+    while @recent_ids.values.size > 100
+      puts "Expiring update #{@recent_ids[timestamp]} from #{Time.at(timestamp)} because there are more than 100 cached updates" if $DEBUG
+      mutex.synchronize {
+        @recent_ids.delete(@recent_ids.keys[0])
+      }
     end
     sleep 1
   end
