@@ -55,15 +55,19 @@ loop do
   puts "Preparing to process updates" if $DEBUG
   begin
   timeline.updates do |update|
+    puts "[#{update.id}] #{update.user.screen_name}: #{update.text}" if $DEBUG
     %x[notify-send "#{update.user.name} (#{update.user.screen_name})" "#{update.text}"]
   end
-  rescue => e
+  rescue Timeout::Error, RuntimeError => e
     if $DEBUG
       puts "Error: #{e.message}"
       e.backtrace.each do |line|
         puts "  #{line}"
       end
+      puts "Will retry in 5 seconds"
     end
+    sleep 5
+    retry
   end
   puts "Sleeping so we don't hammer Twitter with requests" if $DEBUG
   sleep 60
