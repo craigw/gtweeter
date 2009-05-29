@@ -43,8 +43,9 @@ class GTweeter
   def updates(&block)
     new_updates = @twitter.friends_timeline(:since_id => last_update_id)
     puts "Processing #{new_updates.size} updates..." if $DEBUG
-    new_updates.each { |update| yield update; self.last_update_id = update.id }
+    new_updates.each { |update| yield update }
     puts "Done processing most recent updates" if $DEBUG
+    self.last_update_id = new_updates[0].id if new_updates[0]
   end
 end
 
